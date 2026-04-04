@@ -12,7 +12,7 @@ A production-quality REST API for a finance dashboard system featuring role-base
 | Language | TypeScript 5 |
 | Framework | Express.js 4 |
 | ORM | Prisma 5 |
-| Database | SQLite (via Prisma) |
+| Database | PostgreSQL |
 | Auth | JWT (access + refresh tokens with rotation) |
 | Validation | Zod |
 | Rate Limiting | express-rate-limit |
@@ -190,7 +190,7 @@ After running `npm run seed`, the following accounts are available:
 npm test
 ```
 
-The test suite uses a **separate `test.db`** so your development data is never affected. Prisma migrations are automatically applied to the test database before the suite runs.
+The test suite uses a **separate PostgreSQL test database** so your development data is never affected. Set your `DATABASE_URL` in `vitest.config.ts`. Prisma migrations are automatically applied to the test database before the suite runs.
 
 **Test coverage includes:**
 
@@ -231,8 +231,8 @@ All incoming request bodies and query strings are validated with Zod schemas bef
 
 ## Assumptions
 
-1. **Roles are flat strings** stored as plain text in SQLite (SQLite has no native ENUM). Validity is enforced at the API layer via Zod.
-2. **Amount is stored as a Float**. For a real financial system, a DECIMAL type or integer (storing cents) would be preferred. This project uses Float for simplicity with SQLite.
+1. **Roles are native PostgreSQL ENUMs** ensuring database-level integrity.
+2. **Amount is stored as a Decimal(12,2)**. Unlike Float, Decimal perfectly represents currency ensuring zero precision loss during balance aggregation.
 3. **Analysts can update their own records only**. The assignment left this ambiguous; this restriction makes the RBAC model more realistic.
 4. **Deactivating a user** (admin action) does not invalidate their existing JWT access tokens until they expire (15 minutes, configurable). The `authenticate` middleware re-checks user status on every request for this reason.
 5. **No multi-tenancy** — all records are visible to all users with the appropriate role. A real system would scope records by organization.
@@ -244,7 +244,7 @@ All incoming request bodies and query strings are validated with Zod schemas bef
 | Variable | Default | Description |
 |---|---|---|
 | `PORT` | `3000` | Server port |
-| `DATABASE_URL` | `file:./dev.db` | Prisma database URL |
+| `DATABASE_URL` | `postgresql://...` | PostgreSQL connection string |
 | `JWT_ACCESS_SECRET` | — | **Required.** Secret for signing access tokens |
 | `JWT_ACCESS_EXPIRES_IN` | `15m` | Access token lifetime |
 | `JWT_REFRESH_EXPIRES_IN` | `7d` | Refresh token lifetime |

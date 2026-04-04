@@ -19,8 +19,8 @@ const USER_SELECT = {
 export async function listUsers(query: Record<string, unknown>) {
   const pagination = parsePagination(query);
   const where = {
-    ...(query.role ? { role: String(query.role) } : {}),
-    ...(query.status ? { status: String(query.status) } : {}),
+    ...(query.role ? { role: query.role as any } : {}),
+    ...(query.status ? { status: query.status as any } : {}),
   };
 
   const [users, total] = await Promise.all([

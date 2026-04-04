@@ -1,7 +1,19 @@
-export const VALID_ROLES = ['VIEWER', 'ANALYST', 'ADMIN'] as const;
+export enum Role {
+  VIEWER = 'VIEWER',
+  ANALYST = 'ANALYST',
+  ADMIN = 'ADMIN',
+}
 
-export type Role = typeof VALID_ROLES[number];
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+}
 
-export const VALID_STATUSES = ['ACTIVE', 'INACTIVE'] as const;
+export enum RecordType {
+  INCOME = 'INCOME',
+  EXPENSE = 'EXPENSE',
+}
 
-export type Status = typeof VALID_STATUSES[number];
+export const VALID_ROLES = [Role.VIEWER, Role.ANALYST, Role.ADMIN] as const;
+export const VALID_STATUSES = [UserStatus.ACTIVE, UserStatus.INACTIVE] as const;
+export const VALID_RECORD_TYPES = [RecordType.INCOME, RecordType.EXPENSE] as const;

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as DashboardController from './dashboard.controller';
+import { Role } from '../../types/roles';
 import { authenticate } from '../../middleware/auth.middleware';
 import { requireRole } from '../../middleware/role.middleware';
 
@@ -63,7 +64,7 @@ router.get('/by-category', DashboardController.getByCategory);
  *       200: { description: Monthly trends array }
  *       403: { description: Viewer cannot access detailed insights }
  */
-router.get('/trends', requireRole('ANALYST'), DashboardController.getMonthlyTrends);
+router.get('/trends', requireRole(Role.ANALYST), DashboardController.getMonthlyTrends);
 
 /**
  * @openapi

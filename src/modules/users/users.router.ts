@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import * as UsersController from './users.controller';
+import { Role } from '../../types/roles';
 import { authenticate } from '../../middleware/auth.middleware';
 import { requireRole } from '../../middleware/role.middleware';
 
 const router = Router();
 
 // All user management routes require authentication + ADMIN role
-router.use(authenticate, requireRole('ADMIN'));
+router.use(authenticate, requireRole(Role.ADMIN));
 
 /**
  * @openapi

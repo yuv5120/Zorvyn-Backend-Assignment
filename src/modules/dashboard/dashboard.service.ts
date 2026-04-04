@@ -21,8 +21,8 @@ export async function getSummary() {
     }),
   ]);
 
-  const totalIncome = incomeResult._sum.amount ?? 0;
-  const totalExpenses = expenseResult._sum.amount ?? 0;
+  const totalIncome = Number(incomeResult._sum.amount ?? 0);
+  const totalExpenses = Number(expenseResult._sum.amount ?? 0);
 
   return {
     totalIncome,
@@ -63,9 +63,9 @@ export async function getByCategory() {
     };
 
     if (r.type === 'INCOME') {
-      existing.income += r._sum.amount ?? 0;
+      existing.income += Number(r._sum.amount ?? 0);
     } else {
-      existing.expense += r._sum.amount ?? 0;
+      existing.expense += Number(r._sum.amount ?? 0);
     }
     existing.count += r._count;
     existing.net = existing.income - existing.expense;
@@ -101,9 +101,9 @@ export async function getMonthlyTrends(months = 6) {
     const existing = map.get(key) ?? { month: key, income: 0, expense: 0, net: 0 };
 
     if (r.type === 'INCOME') {
-      existing.income += r.amount;
+      existing.income += Number(r.amount);
     } else {
-      existing.expense += r.amount;
+      existing.expense += Number(r.amount);
     }
     existing.net = existing.income - existing.expense;
     map.set(key, existing);

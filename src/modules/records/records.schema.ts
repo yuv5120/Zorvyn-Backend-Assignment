@@ -1,6 +1,6 @@
 import { z } from 'zod';
+import { RecordType } from '../../types/roles';
 
-const VALID_TYPES = ['INCOME', 'EXPENSE'] as const;
 const VALID_SORT_FIELDS = ['date', 'amount', 'createdAt', 'category'] as const;
 const VALID_SORT_ORDERS = ['asc', 'desc'] as const;
 
@@ -8,7 +8,7 @@ export const createRecordSchema = z.object({
   amount: z
     .number({ required_error: 'Amount is required' })
     .positive('Amount must be a positive number'),
-  type: z.enum(VALID_TYPES, { required_error: 'Type must be INCOME or EXPENSE' }),
+  type: z.nativeEnum(RecordType, { required_error: 'Type must be INCOME or EXPENSE' }),
   category: z.string().min(1, 'Category is required').max(100),
   date: z.string().refine((d) => !isNaN(Date.parse(d)), 'Invalid date format'),
   notes: z.string().max(1000).optional(),
@@ -16,7 +16,7 @@ export const createRecordSchema = z.object({
 
 export const updateRecordSchema = z.object({
   amount: z.number().positive('Amount must be a positive number').optional(),
-  type: z.enum(VALID_TYPES).optional(),
+  type: z.nativeEnum(RecordType).optional(),
   category: z.string().min(1).max(100).optional(),
   date: z
     .string()
@@ -30,7 +30,7 @@ export const updateRecordSchema = z.object({
 
 export const listRecordsQuerySchema = z.object({
   // Filters
-  type: z.enum(VALID_TYPES).optional(),
+  type: z.nativeEnum(RecordType).optional(),
   category: z.string().optional(),
   dateFrom: z
     .string()

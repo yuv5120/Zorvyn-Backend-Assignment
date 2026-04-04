@@ -2,10 +2,10 @@
 
 This document outlines the key technical decisions made while building the Zorvyn Finance Backend.
 
-## 1. Database & Column Types (SQLite + Float)
-- **Decision:** Used SQLite as the primary database with Prisma ORM.
-- **Tradeoff - The `amount` Field:** SQLite does not natively support an exact `DECIMAL` or `NUMERIC` type. Currently, the `amount` field is defined as a `Float`. In a real-world financial system, floating-point math can lead to precision errors (e.g. `100.0` being stored and calculated as `99.9999999`).
-- **Production Solution:** If this system were moved to PostgreSQL or MySQL, the `amount` field would immediately be changed to `Decimal(10, 2)` or integer cents to ensure 100% precision. SQLite is used here for zero-setup execution.
+## 1. Database & Column Types (PostgreSQL + Decimal)
+- **Decision:** Used PostgreSQL as the primary database with Prisma ORM.
+- **Data Integrity:** We use true PostgreSQL `ENUM`s for Roles and Statuses to strictly enforce data validity at the database layer.
+- **The `amount` Field:** To prevent floating point arithmetic errors common with standard `Float` types in Node, the `amount` field is strictly defined as `Decimal(12, 2)`. This guarantees pennies are perfectly retained inside Dashboard summations.
 
 ## 2. Refresh Token Strategy
 - **Decision:** Refresh tokens are **not** JWTs. They are generated as random 64-byte hex strings.

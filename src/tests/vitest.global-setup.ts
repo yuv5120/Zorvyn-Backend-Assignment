@@ -5,16 +5,13 @@ export async function setup() {
   execSync('npx prisma migrate deploy', {
     env: {
       ...process.env,
-      DATABASE_URL: 'file:./test.db',
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/zorvyn_test?schema=public',
     },
     stdio: 'inherit',
   });
 }
 
 export async function teardown() {
-  // Optional: delete the test DB file after test run
-  const fs = await import('fs');
-  if (fs.existsSync('./test.db')) {
-    fs.unlinkSync('./test.db');
-  }
+  // PostgreSQL handles state, we just leave it for the next run.
+  // Tests clear their own tables in beforeEach().
 }

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as RecordsController from './records.controller';
+import { Role } from '../../types/roles';
 import { authenticate } from '../../middleware/auth.middleware';
 import { requireRole } from '../../middleware/role.middleware';
 
@@ -61,7 +62,7 @@ router.get('/', RecordsController.listRecords);
  *     responses:
  *       200: { description: CSV file downloaded }
  */
-router.get('/export', requireRole('ANALYST'), RecordsController.exportRecords);
+router.get('/export', requireRole(Role.ANALYST), RecordsController.exportRecords);
 
 /**
  * @openapi
@@ -107,7 +108,7 @@ router.get('/:id', RecordsController.getRecord);
  *       201: { description: Record created }
  *       403: { description: Viewer cannot create records }
  */
-router.post('/', requireRole('ANALYST'), RecordsController.createRecord);
+router.post('/', requireRole(Role.ANALYST), RecordsController.createRecord);
 
 /**
  * @openapi
@@ -138,7 +139,7 @@ router.post('/', requireRole('ANALYST'), RecordsController.createRecord);
  *       200: { description: Record updated }
  *       403: { description: Forbidden }
  */
-router.patch('/:id', requireRole('ANALYST'), RecordsController.updateRecord);
+router.patch('/:id', requireRole(Role.ANALYST), RecordsController.updateRecord);
 
 /**
  * @openapi
@@ -157,6 +158,6 @@ router.patch('/:id', requireRole('ANALYST'), RecordsController.updateRecord);
  *       200: { description: Record soft-deleted }
  *       403: { description: Forbidden — Admin role required }
  */
-router.delete('/:id', requireRole('ADMIN'), RecordsController.deleteRecord);
+router.delete('/:id', requireRole(Role.ADMIN), RecordsController.deleteRecord);
 
 export default router;
