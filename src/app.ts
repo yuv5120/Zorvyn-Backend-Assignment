@@ -42,7 +42,7 @@ const swaggerSpec = swaggerJsdoc({
         'Use POST /api/auth/login with seeded credentials to get a Bearer token.',
       contact: { name: 'Zorvyn Engineering' },
     },
-    servers: [{ url: 'http://localhost:3000', description: 'Local development' }],
+    servers: [{ url: '/', description: 'Current Environment' }],
     components: {
       securitySchemes: {
         bearerAuth: {
