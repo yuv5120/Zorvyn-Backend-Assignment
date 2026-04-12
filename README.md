@@ -1,4 +1,4 @@
-# Zorvyn Finance Backend
+# Financial Application
 
 A production-quality REST API for a finance dashboard system featuring role-based access control, financial record management, and aggregated analytics.
 
@@ -8,50 +8,56 @@ A production-quality REST API for a finance dashboard system featuring role-base
 
 | Layer | Technology |
 |---|---|
-| Runtime | Node.js 20+ |
-| Language | TypeScript 5 |
-| Framework | Express.js 4 |
-| ORM | Prisma 5 |
+| Runtime | Python 3.11+ |
+| Framework | Django 4.2 + Django REST Framework |
 | Database | PostgreSQL |
 | Auth | JWT (access + refresh tokens with rotation) |
-| Validation | Zod |
-| Rate Limiting | express-rate-limit |
-| Testing | Vitest + Supertest + @vitest/coverage-v8 |
-| API Docs | Swagger UI (OpenAPI 3.0) |
+| ORM | Django ORM |
+| Validation | DRF Serializers |
+| Rate Limiting | django-ratelimit |
+| API Docs | drf-spectacular (OpenAPI 3.0 / Swagger UI) |
+| Env Config | python-decouple |
 
 ---
 
 ## Project Structure
 
 ```
-src/
-├── app.ts                     # Express app — middleware, routes, Swagger
-├── server.ts                  # Entry point — DB connect, graceful shutdown
-├── config/
-│   ├── env.ts                 # Environment config with validation
-│   └── prisma.ts              # Singleton Prisma client
-├── middleware/
-│   ├── auth.middleware.ts     # JWT Bearer verification
-│   ├── role.middleware.ts     # RBAC guard factory (requireRole)
-│   └── error.middleware.ts    # Global error handler
-├── modules/
-│   ├── auth/                  # Register, login, refresh, logout, me
-│   ├── users/                 # User CRUD (Admin only)
-│   ├── records/               # Financial records with search + soft delete
-│   └── dashboard/             # Aggregated analytics
-├── utils/
-│   ├── response.ts            # Unified { success, data, meta } shape
-│   ├── errors.ts              # Custom AppError hierarchy
-│   └── pagination.ts          # Reusable Prisma pagination helpers
-├── types/
-│   └── express.d.ts           # Extends req.user type
-└── tests/
-    ├── auth.test.ts
-    ├── records.test.ts
-    └── dashboard.test.ts
-prisma/
-├── schema.prisma              # Data models
-└── seed.ts                    # Seed one user per role + 20 records
+finance_backend/         # Django project settings package
+│   settings.py
+│   urls.py
+│   wsgi.py
+apps/
+├── auth_app/            # register, login, refresh, logout, me
+│   ├── authentication.py  # Custom JWT authentication backend
+│   ├── models.py          # RefreshToken (hashed storage)
+│   ├── services.py        # Auth business logic
+│   ├── views.py
+│   └── urls.py
+├── users/               # User CRUD (Admin only)
+│   ├── models.py          # Custom User model with Role/Status
+│   ├── permissions.py     # RBAC RequireRole permission class
+│   ├── serializers.py
+│   ├── views.py
+│   └── urls.py
+├── records/             # Financial records with search + soft delete
+│   ├── models.py          # FinancialRecord with deleted_at
+│   ├── serializers.py
+│   ├── views.py           # List, create, update, soft-delete, CSV export
+│   └── urls.py
+├── dashboard/           # Aggregated analytics
+│   ├── services.py        # Pure analytics functions
+│   ├── views.py
+│   └── urls.py
+└── core/                # Shared utilities
+    ├── exceptions.py      # Custom exception handler + error classes
+    ├── pagination.py      # Standard pagination with meta
+    ├── response.py        # Unified { success, data, meta } response
+    └── management/
+        └── commands/
+            └── seed.py    # Seed one user per role + 20 records
+manage.py
+requirements.txt
 ```
 
 ---
@@ -60,41 +66,47 @@ prisma/
 
 ### Prerequisites
 
-- Node.js 20+
-- npm 9+
+- Python 3.11+
+- pip
+- PostgreSQL (or use the `DATABASE_URL` env var pointing to any PostgreSQL instance)
 
 ### Setup
 
 ```bash
-# 1. Install dependencies
-npm install
+# 1. Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate   # Windows: venv\Scripts\activate
 
-# 2. Generate Prisma client
-npm run db:generate
+# 2. Install dependencies
+pip install -r requirements.txt
 
-# 3. Run database migrations
-npm run db:migrate
+# 3. Copy and configure environment variables
+cp .env.example .env
+# Edit .env — set DATABASE_URL and JWT_ACCESS_SECRET at minimum
 
-# 4. Seed the database with test data
-npm run seed
+# 4. Run database migrations
+python manage.py migrate
 
-# 5. Start the development server
-npm run dev
+# 5. Seed the database with test data
+python manage.py seed
+
+# 6. Start the development server
+python manage.py runserver
 ```
 
-The server will start on **http://localhost:3000**
+The server will start on **http://localhost:8000**
 
 ---
 
 ## Seeded Accounts
 
-After running `npm run seed`, the following accounts are available:
+After running `python manage.py seed`, the following accounts are available:
 
 | Role | Email | Password |
 |---|---|---|
-| **ADMIN** | admin@zorvyn.com | Admin@123 |
-| **ANALYST** | analyst@zorvyn.com | Analyst@123 |
-| **VIEWER** | viewer@zorvyn.com | Viewer@123 |
+| **ADMIN** | admin@finance.com | Admin@123 |
+| **ANALYST** | analyst@finance.com | Analyst@123 |
+| **VIEWER** | viewer@finance.com | Viewer@123 |
 
 > The seed also creates **20 active financial records** across 4 months and 1 soft-deleted record to demonstrate the soft delete feature.
 
@@ -102,9 +114,11 @@ After running `npm run seed`, the following accounts are available:
 
 ## API Documentation
 
-**Swagger UI**: [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
+**Swagger UI**: [http://localhost:8000/api/docs/](http://localhost:8000/api/docs/)
 
-**Health Check**: [http://localhost:3000/health](http://localhost:3000/health)
+**OpenAPI Schema**: [http://localhost:8000/api/schema/](http://localhost:8000/api/schema/)
+
+**Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
 
 ---
 
@@ -124,24 +138,24 @@ After running `npm run seed`, the following accounts are available:
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/api/users` | List all users (paginated) |
-| GET | `/api/users/:id` | Get a single user |
-| POST | `/api/users` | Create a new user |
-| PATCH | `/api/users/:id` | Update name, role, or status |
-| DELETE | `/api/users/:id` | Deactivate a user |
+| GET | `/api/users/` | List all users (paginated) |
+| GET | `/api/users/<id>/` | Get a single user |
+| POST | `/api/users/` | Create a new user |
+| PATCH | `/api/users/<id>/` | Update name, role, or status |
+| DELETE | `/api/users/<id>/` | Deactivate a user |
 
 ### Financial Records
 
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| GET | `/api/records` | All roles | List with filters, search, pagination |
-| GET | `/api/records/:id` | All roles | Get a single record |
-| POST | `/api/records` | Analyst, Admin | Create a record |
-| PATCH | `/api/records/:id` | Analyst (own), Admin (any) | Update a record |
-| DELETE | `/api/records/:id` | Admin only | Soft-delete a record |
+| GET | `/api/records/` | All roles | List with filters, search, pagination |
+| GET | `/api/records/<id>/` | All roles | Get a single record |
+| POST | `/api/records/` | Analyst, Admin | Create a record |
+| PATCH | `/api/records/<id>/` | Analyst (own), Admin (any) | Update a record |
+| DELETE | `/api/records/<id>/` | Admin only | Soft-delete a record |
 | GET | `/api/records/export` | Analyst, Admin | Export records to CSV |
 
-#### Query Parameters for `GET /api/records`
+#### Query Parameters for `GET /api/records/`
 
 | Parameter | Type | Description |
 |---|---|---|
@@ -150,7 +164,7 @@ After running `npm run seed`, the following accounts are available:
 | `dateFrom` | date string | Filter records on or after this date |
 | `dateTo` | date string | Filter records on or before this date |
 | `search` | string | Full-text search in category and notes |
-| `sortBy` | `date` \| `amount` \| `createdAt` \| `category` | Sort field (default: `date`) |
+| `sortBy` | `date` \| `amount` \| `created_at` \| `category` | Sort field (default: `date`) |
 | `sortOrder` | `asc` \| `desc` | Sort direction (default: `desc`) |
 | `page` | integer | Page number (default: 1) |
 | `limit` | integer | Items per page (default: 20, max: 100) |
@@ -184,58 +198,25 @@ After running `npm run seed`, the following accounts are available:
 
 ---
 
-## Running Tests
-
-```bash
-npm test
-```
-
-The test suite uses a **separate PostgreSQL test database** so your development data is never affected. Set your `DATABASE_URL` in `vitest.config.ts`. Prisma migrations are automatically applied to the test database before the suite runs.
-
-**Test coverage includes:**
-
-- Auth: register, login, token refresh/rotation, logout, inactive user guard
-- Records: CRUD, RBAC enforcement per role, search, filters, pagination, soft delete
-- Dashboard: analytics accuracy, soft-delete exclusion from aggregates, RBAC on trends
-
-```bash
-# Generate coverage report
-npm run test:coverage
-```
-
----
-
 ## Key Design Decisions
 
 ### Soft Delete
-Financial records are never hard-deleted. The `deletedAt` timestamp is set on deletion. All queries filter with `WHERE deletedAt IS NULL`, so soft-deleted records vanish from all lists and analytics while remaining in the database for audit purposes.
+Financial records are never hard-deleted. The `deleted_at` timestamp is set on deletion. All queries filter with `WHERE deleted_at IS NULL`, so soft-deleted records vanish from all lists and analytics while remaining in the database for audit purposes.
 
 ### Token Rotation
-Refresh tokens are rotated on every use. The old token is immediately invalidated, preventing replay attacks. Tokens are stored as SHA-256 hashes — the raw token is never persisted. **Note:** Refresh tokens are **not** JWTs. They are generated as random 64-byte hex strings.
+Refresh tokens are rotated on every use. The old token is immediately invalidated, preventing replay attacks. Tokens are stored as SHA-256 hashes — the raw token is never persisted. Refresh tokens are random 128-byte hex strings, not JWTs.
 
 ### Role Hierarchy
-Roles follow a strict hierarchy: `VIEWER (0) < ANALYST (1) < ADMIN (2)`. The `requireRole('ANALYST')` guard passes for both ANALYST and ADMIN. This is implemented in `role.middleware.ts` as a numeric level comparison.
+Roles follow a strict hierarchy: `VIEWER (0) < ANALYST (1) < ADMIN (2)`. The `RequireRole.for_role('ANALYST')` permission passes for both ANALYST and ADMIN. Implemented in `apps/users/permissions.py` as a numeric level comparison.
 
 ### Analyst Record Ownership
-Analysts can only update records they created themselves. Admins can update any record. This is enforced in `records.service.ts` — not in the router — keeping the business rule co-located with the data logic.
+Analysts can only update records they created themselves. Admins can update any record. Enforced in the view layer within the PATCH handler, mirroring the original service-layer rule.
 
 ### Validation Strategy
-All incoming request bodies and query strings are validated with Zod schemas before reaching the service layer. Zod errors are caught by the global error middleware and returned as structured field-level error arrays.
+All incoming request bodies are validated with DRF serializers before reaching business logic. Validation errors are caught by the global exception handler and returned as structured field-level error arrays in the `{ success, error }` shape.
 
-### Rate Limiting
-- `POST /api/auth/register` — 5 requests/minute
-- `POST /api/auth/login` — 10 requests/minute
-- All other routes — 200 requests/minute global ceiling
-
----
-
-## Assumptions
-
-1. **Roles are native PostgreSQL ENUMs** ensuring database-level integrity.
-2. **Amount is stored as a Decimal(12,2)**. Unlike Float, Decimal perfectly represents currency ensuring zero precision loss during balance aggregation.
-3. **Analysts can update their own records only**. The assignment left this ambiguous; this restriction makes the RBAC model more realistic.
-4. **Deactivating a user** (admin action) does not invalidate their existing JWT access tokens until they expire (15 minutes, configurable). The `authenticate` middleware re-checks user status on every request for this reason.
-5. **No multi-tenancy** — all records are visible to all users with the appropriate role. A real system would scope records by organization.
+### Live User Status Check
+The custom JWT authentication backend re-fetches the user from the database on every authenticated request. This ensures that role changes or account deactivations take effect immediately without waiting for the access token to expire.
 
 ---
 
@@ -243,8 +224,36 @@ All incoming request bodies and query strings are validated with Zod schemas bef
 
 | Variable | Default | Description |
 |---|---|---|
-| `PORT` | `3000` | Server port |
-| `DATABASE_URL` | `postgresql://...` | PostgreSQL connection string |
-| `JWT_ACCESS_SECRET` | — | **Required.** Secret for signing access tokens |
-| `JWT_ACCESS_EXPIRES_IN` | `15m` | Access token lifetime |
-| `JWT_REFRESH_EXPIRES_IN` | `7d` | Refresh token lifetime |
+| `SECRET_KEY` | `django-insecure-...` | **Required in production.** Django secret key |
+| `DEBUG` | `True` | Set to `False` in production |
+| `DATABASE_URL` | SQLite fallback | PostgreSQL connection string |
+| `JWT_ACCESS_SECRET` | `SECRET_KEY` | Secret for signing access tokens |
+| `JWT_ACCESS_EXPIRES_MINUTES` | `15` | Access token lifetime in minutes |
+| `JWT_REFRESH_EXPIRES_DAYS` | `7` | Refresh token lifetime in days |
+| `ALLOWED_HOSTS` | `*` | Comma-separated allowed host list |
+| `CORS_ALLOW_ALL_ORIGINS` | `True` | Set to `False` and configure in production |
+
+---
+
+## Deployment (Render)
+
+Add these environment variables in your Render service dashboard:
+
+```
+SECRET_KEY=<generate a 50+ character random string>
+DEBUG=False
+DATABASE_URL=<your PostgreSQL connection string>
+JWT_ACCESS_SECRET=<your secret>
+ALLOWED_HOSTS=<your-app>.onrender.com
+CORS_ALLOW_ALL_ORIGINS=False
+```
+
+**Start command:**
+```bash
+pip install -r requirements.txt && python manage.py migrate && python manage.py runserver 0.0.0.0:$PORT
+```
+
+For production, prefer gunicorn:
+```bash
+pip install gunicorn && gunicorn finance_backend.wsgi:application --bind 0.0.0.0:$PORT
+```
